@@ -1,0 +1,12 @@
+{
+  "name": "e2e-chat",
+  "version": "1.0.0",
+  "description": "Anonymous, end-to-end encrypted chat relay",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

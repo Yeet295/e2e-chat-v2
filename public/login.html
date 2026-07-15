@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Login</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 400px; margin: 100px auto; background:#111; color:#eee; text-align:center; }
+  input { font-size: 20px; padding: 10px; width: 180px; text-align:center; letter-spacing: 4px; }
+  button { font-size: 16px; padding: 10px 20px; margin-left: 8px; cursor: pointer; }
+  #msg { margin-top: 14px; color: #f88; min-height: 20px; }
+  #room-row { margin-top: 20px; }
+  #room { font-size: 15px; padding: 8px; width: 160px; letter-spacing: normal; text-align: left; }
+</style>
+</head>
+<body>
+
+<h2>Enter access code</h2>
+<p style="color:#999; font-size:14px;">This code rotates every 5 minutes. Ask whoever runs this chat for the current one.</p>
+
+<div>
+  <input id="code" placeholder="000000" maxlength="6" inputmode="numeric" autofocus />
+  <button id="submit">Enter</button>
+</div>
+
+<div id="room-row">
+  <input id="room" placeholder="room name (optional)" />
+</div>
+
+<div id="msg"></div>
+
+<script>
+const codeEl = document.getElementById('code');
+const roomEl = document.getElementById('room');
+const msgEl = document.getElementById('msg');
+const submitBtn = document.getElementById('submit');
+
+async function attemptLogin() {
+  const code = codeEl.value.trim();
+  if (!code) return;
+  submitBtn.disabled = true;
+  msgEl.textContent = 'Checking…';
+
+  try {
+    const res = await fetch('/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code })
+    });
+    const data = await res.json();
+
+    if (res.ok && data.ticket) {
+      const room = encodeURIComponent(roomEl.value.trim() || 'lobby');
+      // Redirect to the chat page with the one-time ticket attached.
+      // The ticket is consumed the instant the chat page uses it to
+      // open its WebSocket connection — it can't be reused afterward.
+      location.href = `/chat.html?ticket=${data.ticket}&room=${room}`;
+    } else {
+      msgEl.textContent = 'Wrong code. Try again.';
+      submitBtn.disabled = false;
+    }
+  } catch (e) {
+    msgEl.textContent = 'Could not reach the server.';
+    submitBtn.disabled = false;
+  }
+}
+
+submitBtn.addEventListener('click', attemptLogin);
+codeEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') attemptLogin(); });
+</script>
+</body>
+</html>
